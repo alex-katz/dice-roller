@@ -415,6 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Re-roll all dice currently on the board
         const allDice = document.querySelectorAll('#dice-board .die');
         allDice.forEach(dieEl => {
+            dieEl.dataset.isBaseRoll = 'true'; // Mark as a base roll die
             const type = dieEl.dataset.type;
             const sides = config[type].sides;
             rollSingleDie(dieEl, sides);

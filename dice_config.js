@@ -125,7 +125,10 @@ window.GAMES_CONFIG = {
                     return; // Skip dice that haven't settled yet
                 }
                 
-                if (d.classList.contains('blank')) blankCount++;
+                // Only count blanks for dice that were part of the main "Roll" button press
+                if (d.dataset.isBaseRoll === 'true' && d.classList.contains('blank')) {
+                    blankCount++;
+                }
                 
                 const valEl = d.querySelector('.die-value');
                 if (valEl && valEl.textContent) {
