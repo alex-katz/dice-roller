@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileToggleBtn = document.getElementById('mobile-toggle-btn');
     const sidebar = document.getElementById('sidebar');
 
-    mobileToggleBtn.addEventListener('click', () => {
+    mobileToggleBtn?.addEventListener('click', () => {
         sidebar.classList.toggle('expanded');
     });
 
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const diffControl = document.getElementById('difficulty-control');
     const diffRadios = document.querySelectorAll('input[name="diff-op"]');
 
-    diffToggleBtn.addEventListener('click', () => {
+    diffToggleBtn?.addEventListener('click', () => {
         diffControl.classList.toggle('hidden');
         diffToggleBtn.classList.toggle('active');
         document.body.classList.toggle('diff-active', !diffControl.classList.contains('hidden'));
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const diffTarget = document.getElementById('diff-target');
     const diffValDisplay = document.getElementById('diff-val-display');
-    diffTarget.addEventListener('input', (e) => {
+    diffTarget?.addEventListener('input', (e) => {
         diffValDisplay.textContent = e.target.value;
         recheckAllDice(); // Re-evaluate board when value changes
     });
@@ -431,18 +431,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    gameSelectBtn.addEventListener('click', () => {
+    gameSelectBtn?.addEventListener('click', () => {
         gameSearch.value = '';
         populateGameList();
         gameModal.classList.add('active');
         setTimeout(() => gameSearch.focus(), 100);
     });
 
-    gameSearch.addEventListener('input', (e) => {
+    gameSearch?.addEventListener('input', (e) => {
         populateGameList(e.target.value);
     });
 
-    gameModalCloseX.addEventListener('click', () => {
+    gameModalCloseX?.addEventListener('click', () => {
         gameModal.classList.remove('active');
     });
 
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectGame(firstGameId);
     }
 
-    rollBtn.addEventListener('click', () => {
+    rollBtn?.addEventListener('click', () => {
         // Re-roll all dice currently on the board
         const allDice = document.querySelectorAll('#dice-board .die');
         allDice.forEach(dieEl => {
@@ -503,9 +503,9 @@ document.addEventListener('DOMContentLoaded', () => {
         controlDiv.updateDisplay(newCount);
     };
 
-    modalCloseX.addEventListener('click', closeModal);
+    modalCloseX?.addEventListener('click', closeModal);
 
-    modalDieSlider.addEventListener('input', (e) => {
+    modalDieSlider?.addEventListener('input', (e) => {
         const newCount = parseInt(e.target.value);
         modalDieCount.textContent = newCount;
         if (currentModalDieType) {

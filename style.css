@@ -1,8 +1,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
 
-body { background-color: #f4f4f9; color: #333; height: 100vh; margin: 0; overflow: hidden; }
+body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; margin: 0; overflow: hidden; }
 
-.app-container { display: flex; height: 100vh; }
+.app-container { display: flex; height: 100vh; height: 100dvh; }
 
 .sidebar {
     width: 250px;
@@ -15,6 +15,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; margin: 0; overflo
     position: sticky;
     top: 0;
     height: 100vh;
+    height: 100dvh;
     overflow-y: auto;
 }
 
@@ -264,6 +265,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; margin: 0; overflo
     flex-direction: column;
     align-items: center;
     height: 100vh;
+    height: 100dvh;
 }
 
 #dice-board {
@@ -435,7 +437,8 @@ body.diff-active .die-bonus-ctrl {
     }
     
     .sidebar.expanded {
-        height: 100vh; /* Take up entire screen so it covers the Total */
+        height: 100vh; 
+        height: 100dvh; /* Dynamic height */
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     
@@ -447,7 +450,8 @@ body.diff-active .die-bonus-ctrl {
     
     .sidebar.expanded #controls-container {
         display: block; /* Show when expanded */
-        height: calc(100vh - 140px); /* Fills the rest of the expanded sidebar */
+        height: calc(100vh - 140px); 
+        height: calc(100dvh - 140px); /* Dynamic height */
     }
     
     .roll-area {
@@ -476,8 +480,9 @@ body.diff-active .die-bonus-ctrl {
     .main-content {
         margin-top: 0;
         padding-top: 80px; /* Clears the top header perfectly */
-        padding-bottom: 10px; /* Reduced because roll-area is no longer floating */
+        padding-bottom: 15px; /* Slight bump for safety */
         height: 100vh;
+        height: 100dvh; /* Dynamic height */
     }
 }
 
