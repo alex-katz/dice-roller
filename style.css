@@ -548,18 +548,27 @@ body.diff-active .die-bonus-ctrl {
 
 .modal-content {
     background: #fff;
-    padding: 30px 20px 20px; /* Increased top padding for the X button */
+    padding: 20px; /* Restored back to standard padding */
     border-radius: 8px;
     width: 300px;
     text-align: center;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
 }
 
 .modal-close-x {
-    position: absolute;
-    top: 8px;
-    right: 12px;
+    /* Removed absolute positioning */
     background: none;
     border: none;
     font-size: 28px;

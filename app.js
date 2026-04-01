@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameModal = document.getElementById('game-modal');
     const gameSearch = document.getElementById('game-search');
     const gameList = document.getElementById('game-list');
-    const gameModalCloseBtn = document.getElementById('game-modal-close-btn');
+    const gameModalCloseX = document.getElementById('game-modal-close-x');
     const diceBoard = document.getElementById('dice-board');
     const primaryZone = document.getElementById('primary-dice-zone');
     const secondaryZone = document.getElementById('secondary-dice-zone');
@@ -442,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         populateGameList(e.target.value);
     });
 
-    gameModalCloseBtn.addEventListener('click', () => {
+    gameModalCloseX.addEventListener('click', () => {
         gameModal.classList.remove('active');
     });
 

@@ -70,8 +70,10 @@
     <!-- Die Config Modal -->
     <div id="die-modal" class="modal-overlay">
         <div class="modal-content">
-            <button id="modal-close-x" class="modal-close-x">&times;</button>
-            <h3 id="modal-die-name">Die Name</h3>
+            <div class="modal-header">
+                <h3 id="modal-die-name">Die Name</h3>
+                <button id="modal-close-x" class="modal-close-x">&times;</button>
+            </div>
             <div class="modal-slider-container">
                 <span id="modal-die-count">0</span>
                 <input type="range" id="modal-die-slider" min="0" max="50" value="0">
@@ -82,12 +84,12 @@
     <!-- Game Selection Modal -->
     <div id="game-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3>Select Game</h3>
+            <div class="modal-header">
+                <h3>Select Game</h3>
+                <button id="game-modal-close-x" class="modal-close-x">&times;</button>
+            </div>
             <input type="text" id="game-search" placeholder="Search games...">
             <div id="game-list"></div>
-            <div class="modal-buttons" style="margin-top: 15px;">
-                <button id="game-modal-close-btn">Close</button>
-            </div>
         </div>
     </div>
 
