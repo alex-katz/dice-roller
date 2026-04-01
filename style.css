@@ -274,7 +274,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; margin: 0; overflo
     padding: 10px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start; /* Fixes top-clipping on scroll */
 }
 
 .dice-zone {
@@ -435,7 +435,7 @@ body.diff-active .die-bonus-ctrl {
     }
     
     .sidebar.expanded {
-        height: calc(100vh - 80px); /* Take up entire screen minus space for Roll button */
+        height: 100vh; /* Take up entire screen so it covers the Total */
         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     
@@ -451,12 +451,14 @@ body.diff-active .die-bonus-ctrl {
     }
     
     .roll-area {
-        position: fixed;
-        bottom: 10px;
-        left: 10px;
-        width: calc(100% - 20px);
-        z-index: 100;
+        width: 100%;
         max-width: none;
+        margin-bottom: 10px;
+    }
+
+    .roll-btn-row {
+        position: relative;
+        z-index: 105; /* Forces the buttons to stay above the expanded sidebar */
     }
 
     #roll-btn {
@@ -473,8 +475,8 @@ body.diff-active .die-bonus-ctrl {
 
     .main-content {
         margin-top: 0;
-        padding-top: 70px;
-        padding-bottom: 80px; /* Reduced from 160px to decrease the gap */
+        padding-top: 80px; /* Clears the top header perfectly */
+        padding-bottom: 10px; /* Reduced because roll-area is no longer floating */
         height: 100vh;
     }
 }
