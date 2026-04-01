@@ -273,20 +273,61 @@ document.addEventListener('DOMContentLoaded', () => {
             controlDiv.updateDisplay = updateDisplay; 
 
             let pressTimer;
+            let isLongPress = false;
+            let ignoreMouse = false;
+            
             const startPress = (e) => {
+                if (e.type === 'touchstart') ignoreMouse = true;
+                if (e.type === 'mousedown' && ignoreMouse) return; // Block ghost clicks
+
+                isLongPress = false;
                 pressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    if (typeof setDieCountTo === 'function') {
+                        setDieCountTo(dieType, 0); // Reset to 0 on long press
+                    }
+                }, 400); // 400ms hold
+            };
+            
+            const endPress = (e) => {
+                if (e.type === 'mouseup' && ignoreMouse) {
+                    setTimeout(() => ignoreMouse = false, 500); // Clear ghost block
+                    return;
+                }
+
+                clearTimeout(pressTimer);
+                if (!isLongPress) {
+                    // Prevent double-firing
+                    if (display.dataset.modalOpened) return;
+                    display.dataset.modalOpened = 'true';
+                    setTimeout(() => display.dataset.modalOpened = '', 300);
+                    
                     if (typeof openModal === 'function') {
                         openModal(dieType, parseInt(controlDiv.dataset.count));
                     }
-                }, 500); 
+                }
+                
+                // Reset the flag slightly after the interaction ends
+                setTimeout(() => isLongPress = false, 50);
+
+                if (e.type === 'touchend') {
+                    setTimeout(() => ignoreMouse = false, 500);
+                }
             };
-            const cancelPress = () => clearTimeout(pressTimer);
+            
+            const cancelPress = (e) => {
+                if (e.type === 'mouseleave' && ignoreMouse) return;
+                clearTimeout(pressTimer);
+                if (e.type === 'touchcancel') {
+                    setTimeout(() => ignoreMouse = false, 500);
+                }
+            };
 
             display.addEventListener('mousedown', startPress);
             display.addEventListener('touchstart', startPress, { passive: true });
-            display.addEventListener('mouseup', cancelPress);
+            display.addEventListener('mouseup', endPress);
+            display.addEventListener('touchend', endPress);
             display.addEventListener('mouseleave', cancelPress);
-            display.addEventListener('touchend', cancelPress);
             display.addEventListener('touchcancel', cancelPress);
             display.addEventListener('contextmenu', e => e.preventDefault()); 
 
@@ -430,8 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalDieName = document.getElementById('modal-die-name');
     const modalDieCount = document.getElementById('modal-die-count');
     const modalDieSlider = document.getElementById('modal-die-slider');
-    const modalResetBtn = document.getElementById('modal-reset-btn');
-    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalCloseX = document.getElementById('modal-close-x');
     
     let currentModalDieType = null;
 
@@ -448,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentModalDieType = null;
     }
 
-    function setDieCountTo(type, newCount) {
+    window.setDieCountTo = function(type, newCount) {
         const controlDiv = document.querySelector(`.dice-control[data-type="${type}"]`);
         if (!controlDiv || !controlDiv.updateDisplay) return;
 
@@ -461,17 +501,9 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < -diff; i++) removeDieFromBoard(type);
         }
         controlDiv.updateDisplay(newCount);
-    }
+    };
 
-    modalCloseBtn.addEventListener('click', closeModal);
-
-    modalResetBtn.addEventListener('click', () => {
-        if (currentModalDieType) {
-            setDieCountTo(currentModalDieType, 0);
-            modalDieSlider.value = 0;
-            modalDieCount.textContent = 0;
-        }
-    });
+    modalCloseX.addEventListener('click', closeModal);
 
     modalDieSlider.addEventListener('input', (e) => {
         const newCount = parseInt(e.target.value);
