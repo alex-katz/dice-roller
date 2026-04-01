@@ -9,28 +9,89 @@
 <body>
     <div class="app-container">
         <aside class="sidebar" id="sidebar">
-            <button id="mobile-toggle-btn">☰</button>
+            <div class="sidebar-header">
+                <button id="mobile-toggle-btn">☰</button>
+                <button id="game-select-btn">
+                    <span id="current-game-name">Standard</span> ⚙
+                </button>
+            </div>
             <div id="controls-container"></div>
             
-            <!-- New difficulty controls -->
-            <div class="difficulty-control" id="difficulty-control">
-                <div class="diff-buttons">
-                    <button class="diff-btn active" data-op="none">None</button>
-                    <button class="diff-btn" data-op=">=">More</button>
-                    <button class="diff-btn" data-op="<=">Less</button>
-                </div>
-                <div class="diff-slider-container">
-                    <span id="diff-val-display">10</span>
-                    <input type="range" id="diff-target" min="1" max="100" value="10">
-                </div>
-            </div>
-
-            <button id="roll-btn">Roll</button>
         </aside>
         
         <main class="main-content">
-            <div id="dice-board"></div>
+            <div id="dice-board">
+                <div id="primary-dice-zone" class="dice-zone"></div>
+                <hr id="board-divider" class="board-divider" style="display: none;">
+                <div id="secondary-dice-zone" class="dice-zone"></div>
+            </div>
+            
+            <div class="roll-area">
+                <!-- Total display -->
+                <div id="roll-total-container" style="display: none;">
+                    Total: <span id="roll-total-value">0</span>
+                </div>
+                
+                <!-- Difficulty control pops up above the buttons -->
+                <div class="difficulty-control hidden" id="difficulty-control">
+                    <div id="standard-diff-ui" style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                        <input type="range" id="diff-target" min="1" max="100" value="10">
+                        <span id="diff-val-display">10</span>
+                        <span class="diff-text">and</span>
+                        <div class="diff-switch">
+                            <input type="radio" id="diff-more" name="diff-op" value=">=" checked>
+                            <label for="diff-more">more</label>
+                            <input type="radio" id="diff-less" name="diff-op" value="<=">
+                            <label for="diff-less">less</label>
+                        </div>
+                    </div>
+                    <div id="warcry-diff-ui" style="display: none; align-items: center; gap: 8px; width: 100%;">
+                        <span style="font-weight: bold;">Target:</span>
+                        <div class="diff-switch" style="flex: 1;">
+                            <input type="radio" id="wc-3" name="warcry-target" value="3">
+                            <label for="wc-3" style="flex: 1; text-align: center;">3+</label>
+                            <input type="radio" id="wc-4" name="warcry-target" value="4" checked>
+                            <label for="wc-4" style="flex: 1; text-align: center;">4+</label>
+                            <input type="radio" id="wc-5" name="warcry-target" value="5">
+                            <label for="wc-5" style="flex: 1; text-align: center;">5+</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Button row -->
+                <div class="roll-btn-row">
+                    <button id="diff-toggle-btn" title="Toggle Difficulty">⚙</button>
+                    <button id="roll-btn">Roll</button>
+                </div>
+            </div>
         </main>
+    </div>
+
+    <!-- Die Config Modal -->
+    <div id="die-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-die-name">Die Name</h3>
+            <div class="modal-slider-container">
+                <span id="modal-die-count">0</span>
+                <input type="range" id="modal-die-slider" min="0" max="50" value="0">
+            </div>
+            <div class="modal-buttons">
+                <button id="modal-reset-btn">Reset to 0</button>
+                <button id="modal-close-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Selection Modal -->
+    <div id="game-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Select Game</h3>
+            <input type="text" id="game-search" placeholder="Search games...">
+            <div id="game-list"></div>
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button id="game-modal-close-btn">Close</button>
+            </div>
+        </div>
     </div>
 
     <script src="dice_config.js"></script>

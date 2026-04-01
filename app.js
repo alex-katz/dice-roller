@@ -1,7 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const config = window.DICE_CONFIG;
+    let config = {};
+    let currentGame = null;
     const controlsContainer = document.getElementById('controls-container');
+    const gameSelectBtn = document.getElementById('game-select-btn');
+    const currentGameName = document.getElementById('current-game-name');
+    const gameModal = document.getElementById('game-modal');
+    const gameSearch = document.getElementById('game-search');
+    const gameList = document.getElementById('game-list');
+    const gameModalCloseBtn = document.getElementById('game-modal-close-btn');
     const diceBoard = document.getElementById('dice-board');
+    const primaryZone = document.getElementById('primary-dice-zone');
+    const secondaryZone = document.getElementById('secondary-dice-zone');
+    const boardDivider = document.getElementById('board-divider');
     const rollBtn = document.getElementById('roll-btn');
 
     const mobileToggleBtn = document.getElementById('mobile-toggle-btn');
@@ -11,31 +21,18 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.toggle('expanded');
     });
 
-    function checkDifficulty(dieEl, finalFace) {
-        const activeBtn = document.querySelector('.diff-btn.active');
-        const op = activeBtn ? activeBtn.dataset.op : 'none';
-        const target = parseFloat(document.getElementById('diff-target').value);
-        
-        dieEl.classList.remove('failed');
-        
-        // Skip if no difficulty, or if the face isn't a number (like Heads/Tails)
-        if (op === 'none' || isNaN(target) || isNaN(finalFace)) return;
-
-        const numericFace = parseFloat(finalFace);
-        if (op === '>=') {
-            if (numericFace < target) dieEl.classList.add('failed');
-        } else if (op === '<=') {
-            if (numericFace > target) dieEl.classList.add('failed');
-        }
-    }
-
     function recheckAllDice() {
         const allDice = document.querySelectorAll('#dice-board .die');
         allDice.forEach(dieEl => {
-            if (dieEl.classList.contains('rolling')) return; // Skip dice that are currently rolling
+            if (dieEl.classList.contains('rolling')) return; 
+            
+            // Re-evaluating requires re-running the evaluator. 
+            // Note: For fully accurate re-evaluation of complex faces, the game evaluator 
+            // relies on the DOM classes (.crit, .blank) or the text value.
             const valueEl = dieEl.querySelector('.die-value');
-            if (valueEl && valueEl.textContent) {
-                checkDifficulty(dieEl, valueEl.textContent);
+            if (valueEl && valueEl.textContent && currentGame && currentGame.evaluator) {
+                // Pass text content as fallback during global rechecks
+                currentGame.evaluator(dieEl, valueEl.textContent);
             }
         });
     }
@@ -45,31 +42,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dieEl.classList.contains('rolling')) return; // prevent overlapping rolls
 
         dieEl.classList.add('rolling');
-        dieEl.classList.remove('failed'); // Reset failed state on new roll
+        dieEl.classList.remove('failed', 'crit', 'blank', 'success'); // Reset states
         const valueEl = dieEl.querySelector('.die-value');
         
         const rollInterval = setInterval(() => {
             const randomFace = sides[Math.floor(Math.random() * sides.length)];
-            valueEl.textContent = randomFace;
+            valueEl.textContent = typeof randomFace === 'object' ? (randomFace.label !== undefined ? randomFace.label : randomFace.value) : randomFace;
         }, 50);
 
         setTimeout(() => {
             clearInterval(rollInterval);
             dieEl.classList.remove('rolling');
+            
             const finalFace = sides[Math.floor(Math.random() * sides.length)];
-            valueEl.textContent = finalFace;
-            checkDifficulty(dieEl, finalFace); // Check difficulty when done
+            const displayVal = typeof finalFace === 'object' ? (finalFace.label !== undefined ? finalFace.label : finalFace.value) : finalFace;
+            valueEl.textContent = displayVal;
+            
+            // Apply visual hooks if the face has a type
+            if (typeof finalFace === 'object' && finalFace.type) {
+                dieEl.classList.add(finalFace.type);
+            }
+            
+            if (currentGame && currentGame.evaluator) {
+                currentGame.evaluator(dieEl, finalFace);
+            }
         }, 800 + Math.random() * 400);
     }
 
     // Difficulty UI logic
-    const diffBtns = document.querySelectorAll('.diff-btn');
-    diffBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            diffBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            recheckAllDice(); // Re-evaluate board when mode changes
-        });
+    const diffToggleBtn = document.getElementById('diff-toggle-btn');
+    const diffControl = document.getElementById('difficulty-control');
+    const diffRadios = document.querySelectorAll('input[name="diff-op"]');
+
+    diffToggleBtn.addEventListener('click', () => {
+        diffControl.classList.toggle('hidden');
+        diffToggleBtn.classList.toggle('active');
+        document.body.classList.toggle('diff-active', !diffControl.classList.contains('hidden'));
+        recheckAllDice();
+    });
+
+    diffRadios.forEach(radio => {
+        radio.addEventListener('change', recheckAllDice);
     });
 
     const diffTarget = document.getElementById('diff-target');
@@ -77,6 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
     diffTarget.addEventListener('input', (e) => {
         diffValDisplay.textContent = e.target.value;
         recheckAllDice(); // Re-evaluate board when value changes
+    });
+
+    const warcryTargets = document.querySelectorAll('input[name="warcry-target"]');
+    warcryTargets.forEach(radio => {
+        radio.addEventListener('change', recheckAllDice);
     });
 
     // Helper function to update the slider's max value based on selected dice
@@ -90,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (count > 0) {
                 const type = control.dataset.type;
                 const sides = config[type].sides;
-                // Get all numeric faces for this die
-                const numericSides = sides.filter(s => !isNaN(s)).map(Number);
+                // Get all numeric faces for this die (extracting from object if necessary)
+                const numericSides = sides.map(s => typeof s === 'object' ? s.value : s).filter(s => !isNaN(s)).map(Number);
                 
                 if (numericSides.length > 0) {
                     hasNumericDice = true;
@@ -118,132 +136,347 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Populate sidebar controls
-    for (const dieType in config) {
-        const controlDiv = document.createElement('div');
-        controlDiv.className = 'dice-control grayed-out'; // Start grayed out
-        controlDiv.dataset.type = dieType;
-        controlDiv.dataset.count = 0;
+    // Helper function to add a die to the board
+    function addDieToBoard(type) {
+        const dieData = config[type];
+        const sides = dieData.sides;
+        const imageUrl = dieData.image;
+
+        const dieWrapper = document.createElement('div');
+        dieWrapper.className = 'die-wrapper';
+
+        const dieEl = document.createElement('div');
+        dieEl.className = 'die';
+        dieEl.dataset.type = type; 
+        dieEl.style.backgroundImage = `url('${imageUrl}')`;
         
-        const leftArrow = document.createElement('span');
-        leftArrow.className = 'arrow';
-        leftArrow.textContent = '-';
-        
-        // Container for the die image
-        const display = document.createElement('div');
-        display.className = 'picker-die';
-        display.style.backgroundImage = `url('${config[dieType].image}')`;
-        
-        // Add aura if configured (applied to picker)
-        if (config[dieType].aura) {
-            display.style.filter = `drop-shadow(0 0 8px ${config[dieType].aura})`;
+        if (dieData.aura) {
+            dieEl.style.filter = `drop-shadow(0 0 5px ${dieData.aura}) drop-shadow(0 0 15px ${dieData.aura})`;
         }
         
-        // Name on top of the die
-        const nameEl = document.createElement('span');
-        nameEl.className = 'picker-die-name';
-        nameEl.textContent = dieType;
+        const nameEl = document.createElement('div');
+        nameEl.className = 'die-name';
+        nameEl.textContent = type;
+
+        const valueEl = document.createElement('div');
+        valueEl.className = 'die-value';
+
+        dieEl.appendChild(nameEl);
+        dieEl.appendChild(valueEl);
+        dieWrapper.appendChild(dieEl);
         
-        // Counter badge in the top right
-        const countBadge = document.createElement('div');
-        countBadge.className = 'picker-die-count';
-        countBadge.textContent = '0';
+        if (currentGame.layout === 'default_die' && type === currentGame.defaultDie) {
+            primaryZone.appendChild(dieWrapper);
+        } else {
+            secondaryZone.appendChild(dieWrapper);
+        }
         
-        display.appendChild(nameEl);
-        display.appendChild(countBadge);
+        dieEl.addEventListener('click', () => {
+            rollSingleDie(dieEl, sides);
+        });
+
+        rollSingleDie(dieEl, sides);
+    }
+
+    // Helper function to remove a die from the board
+    function removeDieFromBoard(type) {
+        const zone = (currentGame.layout === 'default_die' && type === currentGame.defaultDie) ? primaryZone : secondaryZone;
+        const diceList = Array.from(zone.querySelectorAll('.die')).filter(el => el.dataset.type === type);
+        if (diceList.length > 0) {
+            diceList[diceList.length - 1].closest('.die-wrapper').remove();
+        }
+    }
+
+    function buildSidebar() {
+        controlsContainer.innerHTML = '';
+        primaryZone.innerHTML = ''; // Clear zones instead of the parent board
+        secondaryZone.innerHTML = ''; 
         
-        const rightArrow = document.createElement('span');
-        rightArrow.className = 'arrow';
-        rightArrow.textContent = '+';
+        const standardUI = document.getElementById('standard-diff-ui');
+        const warcryUI = document.getElementById('warcry-diff-ui');
+
+        const diffToggleBtn = document.getElementById('diff-toggle-btn');
+        const rollTotalContainer = document.getElementById('roll-total-container');
         
-        const updateDisplay = (count) => {
-            controlDiv.dataset.count = count;
-            countBadge.textContent = count;
-            
-            if (count === 0) {
-                controlDiv.classList.add('grayed-out');
-                countBadge.style.display = 'none'; // Hide badge when 0
+        // Reset visibility
+        if (diffToggleBtn) diffToggleBtn.style.display = 'flex';
+        if (rollTotalContainer) rollTotalContainer.style.display = currentGame.showTotal ? 'block' : 'none';
+        if (standardUI) standardUI.style.display = 'none';
+        if (warcryUI) warcryUI.style.display = 'none';
+        boardDivider.style.display = currentGame.layout === 'default_die' ? 'block' : 'none';
+
+        // Toggle difficulty UI depending on game config
+        if (currentGame.difficultyUI === 'warcry') {
+            if (warcryUI) warcryUI.style.display = 'flex';
+        } else if (currentGame.difficultyUI === 'none') {
+            if (diffToggleBtn) diffToggleBtn.style.display = 'none';
+        } else {
+            if (standardUI) standardUI.style.display = 'flex';
+            if (currentGame.difficultyUI === 'target_only') {
+                document.querySelector('.diff-switch').style.display = 'none';
+                document.querySelector('.diff-text').style.display = 'none';
             } else {
-                controlDiv.classList.remove('grayed-out');
-                countBadge.style.display = 'flex'; // Show badge
+                document.querySelector('.diff-switch').style.display = 'flex';
+                document.querySelector('.diff-text').style.display = 'inline';
+            }
+        }
+
+        // Sync the bonus controls visibility state
+        document.body.classList.toggle('diff-active', !diffControl.classList.contains('hidden'));
+
+        const renderDieControl = (dieType) => {
+            const controlDiv = document.createElement('div');
+            controlDiv.className = 'dice-control grayed-out'; 
+            controlDiv.dataset.type = dieType;
+            controlDiv.dataset.count = 0;
+            
+            const leftArrow = document.createElement('span');
+            leftArrow.className = 'arrow';
+            leftArrow.textContent = '-';
+            
+            const display = document.createElement('div');
+            display.className = 'picker-die';
+            display.style.backgroundImage = `url('${config[dieType].image}')`;
+            
+            if (config[dieType].aura) {
+                display.style.filter = `drop-shadow(0 0 8px ${config[dieType].aura})`;
             }
             
-            // Add this line to recalculate the max value when a die is added or removed:
-            updateDifficultyMax();
+            const nameEl = document.createElement('span');
+            nameEl.className = 'picker-die-name';
+            nameEl.textContent = dieType;
+            
+            const countBadge = document.createElement('div');
+            countBadge.className = 'picker-die-count';
+            countBadge.textContent = '0';
+            
+            display.appendChild(nameEl);
+            display.appendChild(countBadge);
+            
+            const rightArrow = document.createElement('span');
+            rightArrow.className = 'arrow';
+            rightArrow.textContent = '+';
+            
+            const updateDisplay = (count) => {
+                controlDiv.dataset.count = count;
+                countBadge.textContent = count;
+                if (count === 0) {
+                    controlDiv.classList.add('grayed-out');
+                    countBadge.style.display = 'none';
+                } else {
+                    controlDiv.classList.remove('grayed-out');
+                    countBadge.style.display = 'flex';
+                }
+                updateDifficultyMax();
+            };
+
+            controlDiv.updateDisplay = updateDisplay; 
+
+            let pressTimer;
+            const startPress = (e) => {
+                pressTimer = setTimeout(() => {
+                    if (typeof openModal === 'function') {
+                        openModal(dieType, parseInt(controlDiv.dataset.count));
+                    }
+                }, 500); 
+            };
+            const cancelPress = () => clearTimeout(pressTimer);
+
+            display.addEventListener('mousedown', startPress);
+            display.addEventListener('touchstart', startPress, { passive: true });
+            display.addEventListener('mouseup', cancelPress);
+            display.addEventListener('mouseleave', cancelPress);
+            display.addEventListener('touchend', cancelPress);
+            display.addEventListener('touchcancel', cancelPress);
+            display.addEventListener('contextmenu', e => e.preventDefault()); 
+
+            // Spawn first die if default_die layout
+            let startCount = 0;
+            if (currentGame.layout === 'default_die' && dieType === currentGame.defaultDie) {
+                startCount = 1;
+            }
+            updateDisplay(startCount);
+            if (startCount > 0) addDieToBoard(dieType);
+
+            leftArrow.addEventListener('click', () => {
+                let count = parseInt(controlDiv.dataset.count);
+                // Lock the last default die in default_die layout
+                if (currentGame.layout === 'default_die' && dieType === currentGame.defaultDie && count <= 1) return;
+                
+                if (count > 0) {
+                    updateDisplay(count - 1);
+                    removeDieFromBoard(dieType); 
+                }
+            });
+
+            rightArrow.addEventListener('click', () => {
+                let count = parseInt(controlDiv.dataset.count);
+                updateDisplay(count + 1);
+                addDieToBoard(dieType); 
+            });
+
+            controlDiv.appendChild(leftArrow);
+            controlDiv.appendChild(display);
+            controlDiv.appendChild(rightArrow);
+            controlsContainer.appendChild(controlDiv);
         };
 
-        // Initialize state
-        updateDisplay(0);
+        if (currentGame.layout === 'default_die') {
+            // Create global bonus controller
+            const bonusCtrl = document.createElement('div');
+            bonusCtrl.className = 'die-bonus-ctrl global-bonus-ctrl';
+            
+            const btnPlus = document.createElement('button');
+            btnPlus.textContent = '+';
+            const valDisplay = document.createElement('span');
+            valDisplay.id = 'global-bonus-val';
+            valDisplay.textContent = '+0';
+            valDisplay.dataset.bonus = '0';
+            const btnMinus = document.createElement('button');
+            btnMinus.textContent = '-';
+            
+            const updateBonus = (delta) => {
+                let current = parseInt(valDisplay.dataset.bonus) || 0;
+                current += delta;
+                valDisplay.dataset.bonus = current;
+                valDisplay.textContent = current >= 0 ? `+${current}` : current;
+                recheckAllDice();
+            };
+            
+            btnPlus.addEventListener('click', (e) => { e.stopPropagation(); updateBonus(1); });
+            btnMinus.addEventListener('click', (e) => { e.stopPropagation(); updateBonus(-1); });
+            
+            bonusCtrl.appendChild(btnPlus);
+            bonusCtrl.appendChild(valDisplay);
+            bonusCtrl.appendChild(btnMinus);
+            
+            primaryZone.appendChild(bonusCtrl);
 
-        leftArrow.addEventListener('click', () => {
-            let count = parseInt(controlDiv.dataset.count);
-            if (count > 0) updateDisplay(count - 1);
-        });
+            if (config[currentGame.defaultDie]) renderDieControl(currentGame.defaultDie);
+            const hr = document.createElement('hr');
+            hr.className = 'sidebar-divider';
+            controlsContainer.appendChild(hr);
+            for (const dieType in config) {
+                if (dieType !== currentGame.defaultDie) renderDieControl(dieType);
+            }
+        } else {
+            // Render straight to sidebar
+            for (const dieType in config) {
+                renderDieControl(dieType);
+            }
+        }
+    }
 
-        rightArrow.addEventListener('click', () => {
-            let count = parseInt(controlDiv.dataset.count);
-            updateDisplay(count + 1);
-        });
+    function selectGame(gameId) {
+        currentGame = window.GAMES_CONFIG[gameId];
+        config = currentGame.dice;
+        currentGameName.textContent = currentGame.name;
+        buildSidebar();
+        gameModal.classList.remove('active');
+    }
 
-        controlDiv.appendChild(leftArrow);
-        controlDiv.appendChild(display);
-        controlDiv.appendChild(rightArrow);
-        controlsContainer.appendChild(controlDiv);
+    function populateGameList(filter = '') {
+        gameList.innerHTML = '';
+        const lowerFilter = filter.toLowerCase();
+        for (const gameId in window.GAMES_CONFIG) {
+            const gameConfig = window.GAMES_CONFIG[gameId];
+            if (gameConfig.name.toLowerCase().includes(lowerFilter)) {
+                const item = document.createElement('div');
+                item.className = 'game-list-item';
+                item.textContent = gameConfig.name;
+                item.addEventListener('click', () => selectGame(gameId));
+                gameList.appendChild(item);
+            }
+        }
+    }
+
+    gameSelectBtn.addEventListener('click', () => {
+        gameSearch.value = '';
+        populateGameList();
+        gameModal.classList.add('active');
+        setTimeout(() => gameSearch.focus(), 100);
+    });
+
+    gameSearch.addEventListener('input', (e) => {
+        populateGameList(e.target.value);
+    });
+
+    gameModalCloseBtn.addEventListener('click', () => {
+        gameModal.classList.remove('active');
+    });
+
+    // Initialize first game
+    const firstGameId = Object.keys(window.GAMES_CONFIG)[0];
+    if (firstGameId) {
+        selectGame(firstGameId);
     }
 
     rollBtn.addEventListener('click', () => {
-        // Clear board
-        diceBoard.innerHTML = '';
-        const controls = document.querySelectorAll('.dice-control');
-        const diceToRoll = [];
-
-        // Collect dice to roll
-        controls.forEach(control => {
-            const count = parseInt(control.dataset.count) || 0;
-            const type = control.dataset.type;
-            for (let i = 0; i < count; i++) {
-                diceToRoll.push(type);
-            }
-        });
-
-        if (diceToRoll.length === 0) return;
-
-        // Render dice and start animation
-        diceToRoll.forEach(type => {
-            const dieData = config[type];
-            const sides = dieData.sides;
-            const imageUrl = dieData.image;
-
-            const dieEl = document.createElement('div');
-            dieEl.className = 'die';
-            dieEl.style.backgroundImage = `url('${imageUrl}')`;
-            
-            // Add strong aura effect if configured (applied to main board)
-            if (dieData.aura) {
-                // We use two drop-shadows to make the glow thicker and more visible
-                dieEl.style.filter = `drop-shadow(0 0 5px ${dieData.aura}) drop-shadow(0 0 15px ${dieData.aura})`;
-            }
-            
-            // Create name mark
-            const nameEl = document.createElement('div');
-            nameEl.className = 'die-name';
-            nameEl.textContent = type;
-
-            // Create value container
-            const valueEl = document.createElement('div');
-            valueEl.className = 'die-value';
-
-            dieEl.appendChild(nameEl);
-            dieEl.appendChild(valueEl);
-            diceBoard.appendChild(dieEl);
-            
-            // Allow individual re-rolls
-            dieEl.addEventListener('click', () => {
-                rollSingleDie(dieEl, sides);
-            });
-
-            // Trigger initial roll
+        // Re-roll all dice currently on the board
+        const allDice = document.querySelectorAll('#dice-board .die');
+        allDice.forEach(dieEl => {
+            const type = dieEl.dataset.type;
+            const sides = config[type].sides;
             rollSingleDie(dieEl, sides);
         });
+        
+        // Close chooser box on mobile if it is open
+        sidebar.classList.remove('expanded');
+    });
+
+    // Modal logic for quick mass-addition and resets
+    const modalOverlay = document.getElementById('die-modal');
+    const modalDieName = document.getElementById('modal-die-name');
+    const modalDieCount = document.getElementById('modal-die-count');
+    const modalDieSlider = document.getElementById('modal-die-slider');
+    const modalResetBtn = document.getElementById('modal-reset-btn');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    
+    let currentModalDieType = null;
+
+    window.openModal = function(type, currentCount) {
+        currentModalDieType = type;
+        modalDieName.textContent = `Set Amount: ${type}`;
+        modalDieSlider.value = currentCount;
+        modalDieCount.textContent = currentCount;
+        modalOverlay.classList.add('active');
+    };
+
+    function closeModal() {
+        modalOverlay.classList.remove('active');
+        currentModalDieType = null;
+    }
+
+    function setDieCountTo(type, newCount) {
+        const controlDiv = document.querySelector(`.dice-control[data-type="${type}"]`);
+        if (!controlDiv || !controlDiv.updateDisplay) return;
+
+        const currentCount = parseInt(controlDiv.dataset.count);
+        const diff = newCount - currentCount;
+
+        if (diff > 0) {
+            for (let i = 0; i < diff; i++) addDieToBoard(type);
+        } else if (diff < 0) {
+            for (let i = 0; i < -diff; i++) removeDieFromBoard(type);
+        }
+        controlDiv.updateDisplay(newCount);
+    }
+
+    modalCloseBtn.addEventListener('click', closeModal);
+
+    modalResetBtn.addEventListener('click', () => {
+        if (currentModalDieType) {
+            setDieCountTo(currentModalDieType, 0);
+            modalDieSlider.value = 0;
+            modalDieCount.textContent = 0;
+        }
+    });
+
+    modalDieSlider.addEventListener('input', (e) => {
+        const newCount = parseInt(e.target.value);
+        modalDieCount.textContent = newCount;
+        if (currentModalDieType) {
+            setDieCountTo(currentModalDieType, newCount);
+        }
     });
 });

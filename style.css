@@ -1,8 +1,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
 
-body { background-color: #f4f4f9; color: #333; height: 100vh; }
+body { background-color: #f4f4f9; color: #333; height: 100vh; margin: 0; overflow: hidden; }
 
-.app-container { display: flex; height: 100%; }
+.app-container { display: flex; height: 100vh; }
 
 .sidebar {
     width: 250px;
@@ -12,6 +12,23 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; }
     display: flex;
     flex-direction: column;
     gap: 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.sidebar-divider {
+    border: none;
+    border-top: 2px solid #ddd;
+    margin: 10px 0;
 }
 
 .dice-control {
@@ -92,53 +109,115 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; }
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.difficulty-control {
+#roll-total-container {
+    font-size: 24px;
+    font-weight: bold;
+    color: #888; /* Dark grey, lighter than the usual #333 font color */
+    margin: -10px 0 15px 0; /* Pulls it up closer to the dice board */
+    text-align: center;
+    user-select: none;
+    letter-spacing: 1px;
+}
+
+.roll-area {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: auto;
-    margin-bottom: 10px;
-}
-
-.diff-buttons {
-    display: flex;
-    gap: 5px;
-}
-
-.diff-btn {
-    flex: 1;
-    padding: 8px 0;
-    border: 1px solid #ccc;
-    background: #f9f9f9;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #333;
-}
-
-.diff-btn.active {
-    background: #007bff;
-    color: #fff;
-    border-color: #0056b3;
-    font-weight: bold;
-}
-
-.diff-slider-container {
-    display: flex;
     align-items: center;
     gap: 10px;
+    width: 100%;
+    max-width: 450px;
+    flex-shrink: 0;
 }
 
-#diff-val-display {
-    font-size: 18px;
-    font-weight: bold;
-    min-width: 30px;
-    text-align: center;
+.roll-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+}
+
+#diff-toggle-btn {
+    background: #fff;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#diff-toggle-btn.active, #diff-toggle-btn:hover {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.difficulty-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    padding: 10px 15px;
+    border-radius: 20px;
+    width: 100%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: opacity 0.2s;
+}
+
+.difficulty-control.hidden {
+    opacity: 0;
+    pointer-events: none; /* Prevents clicking on it when hidden */
+    /* Removed display: none so the space is always reserved */
 }
 
 #diff-target {
     flex: 1;
+    min-width: 50px;
     cursor: pointer;
+}
+
+#diff-val-display {
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+.diff-text {
+    font-size: 14px;
+    color: #555;
+}
+
+.diff-switch {
+    display: flex;
+    background: #ddd;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.diff-switch input[type="radio"] {
+    display: none;
+}
+
+.diff-switch label {
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #555;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+}
+
+.diff-switch input[type="radio"]:checked + label {
+    background: #007bff;
+    color: #fff;
+    font-weight: bold;
 }
 
 .die.failed {
@@ -146,32 +225,125 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; }
     filter: grayscale(100%) !important; /* overrides any aura colors */
 }
 
+.die.crit {
+    filter: drop-shadow(0 0 10px gold) drop-shadow(0 0 20px gold) !important;
+    color: #d4af37;
+}
+
+.die.blank .die-value {
+    opacity: 0.2; /* Makes the blank face look distinctly empty */
+}
+
+.die.success {
+    filter: drop-shadow(0 0 10px #32cd32) drop-shadow(0 0 20px #32cd32) !important;
+}
+
 #roll-btn {
-    padding: 10px;
+    padding: 10px 40px;
     background: #007bff;
     color: #fff;
     border: none;
-    border-radius: 4px;
+    border-radius: 30px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: transform 0.1s, background 0.2s;
+    flex: 1; /* Stretches to fill space next to gear button */
 }
 
-#roll-btn:hover { background: #0056b3; }
+#roll-btn:hover { 
+    background: #0056b3; 
+    transform: translateY(-2px);
+}
 
 .main-content {
     flex: 1;
-    padding: 40px;
+    padding: 20px 40px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    overflow-y: auto;
+    height: 100vh;
 }
 
 #dice-board {
+    width: 100%;
+    flex: 1; 
+    overflow-y: auto; 
+    margin-bottom: 20px; 
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.dice-zone {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     justify-content: center;
+    width: 100%;
+}
+
+.board-divider {
+    width: 80%;
+    border: none;
+    border-top: 2px solid #ccc;
+    margin: 25px auto;
+}
+
+.die-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.die-bonus-ctrl {
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    background: transparent; /* Blends into background */
+    box-shadow: none;
+    font-size: 14px;
+    user-select: none;
+    margin-left: -5px; /* Pull it slightly closer to the die */
+}
+
+/* Only display when the body has the diff-active class */
+body.diff-active .die-bonus-ctrl {
+    display: flex;
+}
+
+.die-bonus-ctrl button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 2px 10px;
+    font-weight: bold;
+    font-size: 18px;
+    color: #aaa; /* Muted color */
+    width: 100%;
+    transition: background 0.2s, color 0.2s;
+}
+
+.die-bonus-ctrl button:hover {
+    color: #555;
+    background: rgba(0,0,0,0.05); /* Very faint hover effect */
+    border-radius: 4px;
+}
+
+.die-bonus-ctrl span {
+    padding: 2px 6px;
+    font-weight: bold;
+    min-width: 35px;
+    text-align: center;
+    color: #777; /* Muted color */
+}
+
+.global-bonus-ctrl {
+    margin-left: 20px; /* Bigger gap */
+    order: 99; /* Forces it to always sit at the end of the flex container */
+    align-self: center; /* Vertically centers it relative to the dice */
 }
 
 .die {
@@ -237,7 +409,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; }
     cursor: pointer;
     font-size: 24px;
     width: max-content;
-    align-self: flex-start; /* Aligns the button to the left */
+    align-self: center; /* Changed from flex-start */
     color: #333;
 }
 
@@ -255,51 +427,173 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; }
         left: 0;
         z-index: 100;
         gap: 0;
+        height: auto; /* Fixes the invisible dice issue */
     }
     
     #mobile-toggle-btn {
         display: block;
     }
     
+    .sidebar.expanded {
+        height: calc(100vh - 80px); /* Take up entire screen minus space for Roll button */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
     #controls-container {
         display: none; /* Hidden by default on small screens */
-        max-height: 50vh;
         overflow-y: auto;
         margin-top: 10px;
     }
     
     .sidebar.expanded #controls-container {
         display: block; /* Show when expanded */
+        height: calc(100vh - 140px); /* Fills the rest of the expanded sidebar */
     }
     
-    #roll-btn {
+    .roll-area {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        margin: 0;
-        border-radius: 0;
-        padding: 15px;
-        font-size: 20px;
+        bottom: 10px;
+        left: 10px;
+        width: calc(100% - 20px);
         z-index: 100;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+        max-width: none;
     }
 
-    .difficulty-control {
-        position: fixed;
-        bottom: 54px; /* Sits right above the ~54px tall Roll button */
-        left: 0;
-        width: 100%;
-        background: #fff;
-        padding: 10px 20px;
+    #roll-btn {
+        /* Override defaults for mobile */
         margin: 0;
-        z-index: 100;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        padding: 10px;
+        font-size: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
     
-    .main-content {
-        margin-top: 60px; /* Leave space for top bar */
-        padding-bottom: 150px; /* Leave enough room for both fixed elements */
-        align-items: flex-start; /* Prevent dice from hiding behind top bar */
+    #diff-toggle-btn {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
+
+    .main-content {
+        margin-top: 0;
+        padding-top: 70px;
+        padding-bottom: 80px; /* Reduced from 160px to decrease the gap */
+        height: 100vh;
+    }
+}
+
+#game-select-btn {
+    padding: 10px 12px;
+    font-size: 18px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    color: #333;
+    transition: background 0.2s;
+    flex: 1; /* Added to take up remaining row space */
+}
+
+#game-select-btn:hover {
+    background: #f0f0f5;
+}
+
+#game-search {
+    width: 100%;
+    padding: 10px;
+    margin: 15px 0 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+#game-list {
+    max-height: 40vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: left;
+}
+
+.game-list-item {
+    padding: 12px;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.1s;
+}
+
+.game-list-item:hover {
+    background: #e9ecef;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.modal-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+#modal-die-count {
+    font-size: 20px;
+    font-weight: bold;
+    min-width: 30px;
+}
+
+.modal-slider-container input {
+    flex: 1;
+    cursor: pointer;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modal-buttons button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#modal-reset-btn {
+    background: #dc3545;
+    color: white;
+}
+
+#modal-close-btn {
+    background: #6c757d;
+    color: white;
 }
