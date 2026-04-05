@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.toggle('expanded');
     });
 
+    const infoToggleBtn = document.getElementById('info-toggle-btn');
+    infoToggleBtn?.addEventListener('click', () => {
+        document.body.classList.toggle('show-dice-names');
+        infoToggleBtn.classList.toggle('active');
+    });
+
     function recheckAllDice() {
         const allDice = document.querySelectorAll('#dice-board .die');
         allDice.forEach(dieEl => {
@@ -160,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const valueEl = document.createElement('div');
         valueEl.className = 'die-value';
+        valueEl.textContent = ''; // Start completely blank
 
         dieEl.appendChild(nameEl);
         dieEl.appendChild(valueEl);
@@ -175,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rollSingleDie(dieEl, sides);
         });
 
-        rollSingleDie(dieEl, sides);
+        // Removed the automatic rollSingleDie(dieEl, sides) call from here
     }
 
     // Helper function to remove a die from the board
@@ -331,13 +338,17 @@ document.addEventListener('DOMContentLoaded', () => {
             display.addEventListener('touchcancel', cancelPress);
             display.addEventListener('contextmenu', e => e.preventDefault()); 
 
-            // Spawn first die if default_die layout
+            // Spawn starting dice
             let startCount = 0;
-            if (currentGame.layout === 'default_die' && dieType === currentGame.defaultDie) {
+            if (currentGame.startDice && currentGame.startDice[dieType]) {
+                startCount = currentGame.startDice[dieType];
+            } else if (currentGame.layout === 'default_die' && dieType === currentGame.defaultDie) {
                 startCount = 1;
             }
             updateDisplay(startCount);
-            if (startCount > 0) addDieToBoard(dieType);
+            for (let i = 0; i < startCount; i++) {
+                addDieToBoard(dieType);
+            }
 
             leftArrow.addEventListener('click', () => {
                 let count = parseInt(controlDiv.dataset.count);

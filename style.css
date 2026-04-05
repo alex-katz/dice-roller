@@ -113,7 +113,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
 #roll-total-container {
     font-size: 24px;
     font-weight: bold;
-    color: #888; /* Dark grey, lighter than the usual #333 font color */
+    color: #888; 
     margin: -10px 0 15px 0; /* Pulls it up closer to the dice board */
     text-align: center;
     user-select: none;
@@ -128,6 +128,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
     width: 100%;
     max-width: 450px;
     flex-shrink: 0;
+    /* Removed position: relative */
 }
 
 .roll-btn-row {
@@ -157,6 +158,13 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
 #diff-toggle-btn.active, #diff-toggle-btn:hover {
     border-color: #007bff;
     color: #007bff;
+}
+
+#diff-toggle-btn img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    pointer-events: none; /* Ensures the click registers on the button itself */
 }
 
 .difficulty-control {
@@ -258,6 +266,34 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
     transform: translateY(-2px);
 }
 
+#info-toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #ccc;
+    color: #555;
+    font-size: 18px;
+    font-family: serif;
+    font-style: italic;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+    z-index: 50;
+}
+
+#info-toggle-btn.active {
+    background: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
 .main-content {
     flex: 1;
     padding: 20px 40px;
@@ -266,6 +302,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
     align-items: center;
     height: 100vh;
     height: 100dvh;
+    position: relative; /* Anchors the info button */
 }
 
 #dice-board {
@@ -285,6 +322,15 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
     gap: 20px;
     justify-content: center;
     width: 100%;
+}
+
+#primary-dice-zone {
+    margin-top: auto;
+}
+
+#secondary-dice-zone {
+    margin-bottom: auto;
+    padding-bottom: 40px; /* Creates extra scrollable space at the bottom */
 }
 
 .board-divider {
@@ -365,6 +411,7 @@ body.diff-active .die-bonus-ctrl {
 }
 
 .die-name {
+    display: none; /* Hidden by default */
     font-size: 10px;
     color: #555;
     font-weight: bold;
@@ -375,6 +422,10 @@ body.diff-active .die-bonus-ctrl {
          1px -1px 0 #fff,
         -1px  1px 0 #fff,
          1px  1px 0 #fff;
+}
+
+body.show-dice-names .die-name {
+    display: block; /* Show when active */
 }
 
 .die-value {
@@ -413,6 +464,14 @@ body.diff-active .die-bonus-ctrl {
     width: max-content;
     align-self: center; /* Changed from flex-start */
     color: #333;
+}
+
+#mobile-toggle-btn img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none; /* Ensures the click registers on the button itself */
 }
 
 /* Responsive layout: when 250px is more than 1/3 of the screen (< 750px) */
@@ -458,6 +517,11 @@ body.diff-active .die-bonus-ctrl {
         width: 100%;
         max-width: none;
         margin-bottom: 10px;
+    }
+
+    #info-toggle-btn {
+        top: 75px; /* Moved slightly closer to the top */
+        right: 15px;
     }
 
     .roll-btn-row {

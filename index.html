@@ -10,9 +10,11 @@
     <div class="app-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <button id="mobile-toggle-btn">☰</button>
+                <button id="mobile-toggle-btn">
+                    <img src="images/dice_config.png" alt="Menu">
+                </button>
                 <button id="game-select-btn">
-                    <span id="current-game-name">Standard</span> ⚙
+                    <span id="current-game-name">Standard</span>
                 </button>
             </div>
             <div id="controls-container"></div>
@@ -20,6 +22,7 @@
         </aside>
         
         <main class="main-content">
+            <button id="info-toggle-btn" title="Toggle Dice Names">i</button>
             <div id="dice-board">
                 <div id="primary-dice-zone" class="dice-zone"></div>
                 <hr id="board-divider" class="board-divider" style="display: none;">
@@ -60,7 +63,9 @@
                 
                 <!-- Button row -->
                 <div class="roll-btn-row">
-                    <button id="diff-toggle-btn" title="Toggle Difficulty">⚙</button>
+                    <button id="diff-toggle-btn" title="Toggle Difficulty">
+                        <img src="images/gear.png" alt="Settings">
+                    </button>
                     <button id="roll-btn">Roll</button>
                 </div>
             </div>
