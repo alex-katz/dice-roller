@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     let config = {};
     let currentGame = null;
+    let currentGameId = null;
+    let isBuildingSidebar = false;
     const controlsContainer = document.getElementById('controls-container');
     const gameSelectBtn = document.getElementById('game-select-btn');
     const currentGameName = document.getElementById('current-game-name');
@@ -142,6 +144,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper to save current dice state to local storage
+    function saveDiceState() {
+        const controls = document.querySelectorAll('.dice-control');
+        if (controls.length === 0) return;
+        const diceState = {};
+        controls.forEach(c => {
+            diceState[c.dataset.type] = parseInt(c.dataset.count) || 0;
+        });
+        localStorage.setItem('saved_dice', JSON.stringify(diceState));
+    }
+
     // Helper function to add a die to the board
     function addDieToBoard(type) {
         const dieData = config[type];
@@ -195,9 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function buildSidebar() {
+        isBuildingSidebar = true;
         controlsContainer.innerHTML = '';
         primaryZone.innerHTML = ''; // Clear zones instead of the parent board
         secondaryZone.innerHTML = ''; 
+        
+        const savedDice = JSON.parse(localStorage.getItem('saved_dice') || 'null');
         
         const standardUI = document.getElementById('standard-diff-ui');
         const warcryUI = document.getElementById('warcry-diff-ui');
@@ -275,6 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     countBadge.style.display = 'flex';
                 }
                 updateDifficultyMax();
+                if (!isBuildingSidebar) saveDiceState();
             };
 
             controlDiv.updateDisplay = updateDisplay; 
@@ -340,7 +357,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Spawn starting dice
             let startCount = 0;
-            if (currentGame.startDice && currentGame.startDice[dieType]) {
+            if (savedDice) {
+                startCount = savedDice[dieType] || 0;
+            } else if (currentGame.startDice && currentGame.startDice[dieType]) {
                 startCount = currentGame.startDice[dieType];
             } else if (currentGame.layout === 'default_die' && dieType === currentGame.defaultDie) {
                 startCount = 1;
@@ -417,9 +436,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderDieControl(dieType);
             }
         }
+        
+        isBuildingSidebar = false;
+        saveDiceState();
     }
 
-    function selectGame(gameId) {
+    function selectGame(gameId, isInitialLoad = false) {
+        if (!isInitialLoad && currentGameId !== gameId) {
+            localStorage.removeItem('saved_dice'); // Wipe old dice when switching
+        }
+        currentGameId = gameId;
+        localStorage.setItem('saved_game', gameId);
+
         currentGame = window.GAMES_CONFIG[gameId];
         config = currentGame.dice;
         currentGameName.textContent = currentGame.name;
@@ -457,10 +485,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gameModal.classList.remove('active');
     });
 
-    // Initialize first game
-    const firstGameId = Object.keys(window.GAMES_CONFIG)[0];
+    // Initialize first game from storage or default
+    const savedGameId = localStorage.getItem('saved_game');
+    const firstGameId = (savedGameId && window.GAMES_CONFIG[savedGameId]) ? savedGameId : Object.keys(window.GAMES_CONFIG)[0];
     if (firstGameId) {
-        selectGame(firstGameId);
+        selectGame(firstGameId, true); // pass true so it doesn't wipe saved dice on refresh
     }
 
     rollBtn?.addEventListener('click', () => {
