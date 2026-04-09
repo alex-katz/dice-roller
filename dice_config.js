@@ -8,6 +8,7 @@ window.GAMES_CONFIG = {
             'd10': { sides: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], image: 'images/d10.png' },
             'd12': { sides: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], image: 'images/d12.png' },
             'd20': { sides: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], image: 'images/d20.png' },
+            'd100': { sides: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], image: 'images/d10.png', doubleDie: 'tens_and_ones' },
             'coin': { sides: ['Heads', 'Tails'], image: 'images/d2.png' }
         },
         difficultyUI: 'target_and_mode',
@@ -41,16 +42,9 @@ window.GAMES_CONFIG = {
                 image: 'images/d6.png' 
             },
             'd66': { 
-                sides: [
-                    11, 12, 13, 14, 15, 16,
-                    21, 22, 23, 24, 25, 26,
-                    31, 32, 33, 34, 35, 36,
-                    41, 42, 43, 44, 45, 46,
-                    51, 52, 53, 54, 55, 56,
-                    61, 62, 63, 64, 65, 66
-                ], 
+                sides: [1, 2, 3, 4, 5, 6], 
                 image: 'images/d6.png', 
-                aura: '#ff4444' 
+                doubleDie: 'tens_and_ones'
             }
         },
         difficultyUI: 'warcry',

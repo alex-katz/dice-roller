@@ -79,6 +79,7 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
     justify-content: center;
     position: relative;
     transition: all 0.2s;
+    z-index: 0;
 }
 
 .picker-die-name {
@@ -408,6 +409,15 @@ body.diff-active .die-bonus-ctrl {
     position: relative;
     user-select: none;
     cursor: pointer;
+    z-index: 0;
+}
+
+.is-double-die,
+.is-double-die-picker {
+    /* 1st image (front) is centered. 2nd image (back) is pushed top-left */
+    background-position: center, top 0px left 0px !important;
+    background-size: 85% 85%, 85% 85% !important;
+    background-repeat: no-repeat, no-repeat !important;
 }
 
 .die-name {

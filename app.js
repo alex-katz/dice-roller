@@ -49,10 +49,47 @@ document.addEventListener('DOMContentLoaded', () => {
     function rollSingleDie(dieEl, sides) {
         if (dieEl.classList.contains('rolling')) return; // prevent overlapping rolls
 
+        const type = dieEl.dataset.type;
+        const dieData = config[type];
+
         dieEl.classList.add('rolling');
         dieEl.classList.remove('failed', 'crit', 'blank', 'success'); // Reset states
         const valueEl = dieEl.querySelector('.die-value');
+
+        if (dieData.doubleDie) {
+            const rollInterval = setInterval(() => {
+                const r1 = sides[Math.floor(Math.random() * sides.length)];
+                const r2 = sides[Math.floor(Math.random() * sides.length)];
+                const v1 = typeof r1 === 'object' ? r1.value : parseFloat(r1);
+                const v2 = typeof r2 === 'object' ? r2.value : parseFloat(r2);
+                
+                let num = dieData.doubleDie === 'tens_and_ones' ? (v1 * 10 + v2) : (v1 + v2);
+                if (dieData.doubleDie === 'tens_and_ones' && num === 0) num = 100;
+                valueEl.textContent = num;
+            }, 50);
+
+            setTimeout(() => {
+                clearInterval(rollInterval);
+                dieEl.classList.remove('rolling');
+                
+                const f1 = sides[Math.floor(Math.random() * sides.length)];
+                const f2 = sides[Math.floor(Math.random() * sides.length)];
+                const v1 = typeof f1 === 'object' ? f1.value : parseFloat(f1);
+                const v2 = typeof f2 === 'object' ? f2.value : parseFloat(f2);
+                
+                let finalNum = dieData.doubleDie === 'tens_and_ones' ? (v1 * 10 + v2) : (v1 + v2);
+                if (dieData.doubleDie === 'tens_and_ones' && finalNum === 0) finalNum = 100;
+                
+                valueEl.textContent = finalNum;
+                
+                if (currentGame && currentGame.evaluator) {
+                    currentGame.evaluator(dieEl, finalNum);
+                }
+            }, 800 + Math.random() * 400);
+            return;
+        }
         
+        // Standard single die logic
         const rollInterval = setInterval(() => {
             const randomFace = sides[Math.floor(Math.random() * sides.length)];
             valueEl.textContent = typeof randomFace === 'object' ? (randomFace.label !== undefined ? randomFace.label : randomFace.value) : randomFace;
@@ -66,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayVal = typeof finalFace === 'object' ? (finalFace.label !== undefined ? finalFace.label : finalFace.value) : finalFace;
             valueEl.textContent = displayVal;
             
-            // Apply visual hooks if the face has a type
             if (typeof finalFace === 'object' && finalFace.type) {
                 dieEl.classList.add(finalFace.type);
             }
@@ -121,7 +157,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (numericSides.length > 0) {
                     hasNumericDice = true;
-                    const maxSide = Math.max(...numericSides);
+                    let maxSide = Math.max(...numericSides);
+                    
+                    if (config[type].doubleDie === 'tens_and_ones') {
+                        maxSide = maxSide * 10 + maxSide;
+                        if (maxSide === 99) maxSide = 100; // d100 usually handles 00 as 100
+                    } else if (config[type].doubleDie === 'simple_sum') {
+                        maxSide = maxSide * 2;
+                    }
+
                     if (maxSide > overallMax) {
                         overallMax = maxSide;
                     }
@@ -166,8 +210,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const dieEl = document.createElement('div');
         dieEl.className = 'die';
+        if (dieData.doubleDie) {
+            dieEl.classList.add('is-double-die');
+            dieEl.style.backgroundImage = `url('${imageUrl}'), url('${imageUrl}')`;
+        } else {
+            dieEl.style.backgroundImage = `url('${imageUrl}')`;
+        }
         dieEl.dataset.type = type; 
-        dieEl.style.backgroundImage = `url('${imageUrl}')`;
         
         if (dieData.aura) {
             dieEl.style.filter = `drop-shadow(0 0 5px ${dieData.aura}) drop-shadow(0 0 15px ${dieData.aura})`;
@@ -259,7 +308,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const display = document.createElement('div');
             display.className = 'picker-die';
-            display.style.backgroundImage = `url('${config[dieType].image}')`;
+            if (config[dieType].doubleDie) {
+                display.classList.add('is-double-die-picker');
+                display.style.backgroundImage = `url('${config[dieType].image}'), url('${config[dieType].image}')`;
+            } else {
+                display.style.backgroundImage = `url('${config[dieType].image}')`;
+            }
             
             if (config[dieType].aura) {
                 display.style.filter = `drop-shadow(0 0 8px ${config[dieType].aura})`;
