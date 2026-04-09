@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Dice Roller</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -100,5 +102,14 @@
 
     <script src="dice_config.js"></script>
     <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>
