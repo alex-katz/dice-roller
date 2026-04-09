@@ -32,6 +32,45 @@ body { background-color: #f4f4f9; color: #333; height: 100vh; height: 100dvh; ma
     margin: 10px 0;
 }
 
+.shake-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: #f0f0f5;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.shake-control label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+
+.info-btn {
+    background: #ccc;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: serif;
+    font-style: italic;
+}
+
+.info-btn:hover {
+    background: #999;
+}
+
 .dice-control {
     display: flex;
     justify-content: space-between;

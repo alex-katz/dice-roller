@@ -45,72 +45,155 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Helper function to animate and roll a single die
-    function rollSingleDie(dieEl, sides) {
-        if (dieEl.classList.contains('rolling')) return; // prevent overlapping rolls
+    const shakeCheckbox = document.getElementById('shake-checkbox');
 
-        const type = dieEl.dataset.type;
-        const dieData = config[type];
+    function createPRNG(seed) {
+        // Simple Linear Congruential Generator seeded by physical motion
+        let s = Math.floor(seed * 100000) || Date.now();
+        return function() {
+            s = (s * 9301 + 49297) % 233280;
+            return s / 233280;
+        };
+    }
 
+    function startRollAnimation(dieEl, sides, dieData) {
+        if (dieEl.classList.contains('rolling')) return;
         dieEl.classList.add('rolling');
-        dieEl.classList.remove('failed', 'crit', 'blank', 'success'); // Reset states
-        const valueEl = dieEl.querySelector('.die-value');
+        dieEl.classList.remove('failed', 'crit', 'blank', 'success');
+        const valueEl = dieEl.querySelector('.die-value') || dieEl.querySelector('.combined-val');
 
         if (dieData.doubleDie) {
-            const rollInterval = setInterval(() => {
+            const val1 = dieEl.querySelector('.val-1');
+            const val2 = dieEl.querySelector('.val-2');
+            dieEl.rollInterval = setInterval(() => {
                 const r1 = sides[Math.floor(Math.random() * sides.length)];
                 const r2 = sides[Math.floor(Math.random() * sides.length)];
+                if(val1) val1.textContent = typeof r1 === 'object' ? (r1.label !== undefined ? r1.label : r1.value) : r1;
+                if(val2) val2.textContent = typeof r2 === 'object' ? (r2.label !== undefined ? r2.label : r2.value) : r2;
+                
                 const v1 = typeof r1 === 'object' ? r1.value : parseFloat(r1);
                 const v2 = typeof r2 === 'object' ? r2.value : parseFloat(r2);
-                
                 let num = dieData.doubleDie === 'tens_and_ones' ? (v1 * 10 + v2) : (v1 + v2);
                 if (dieData.doubleDie === 'tens_and_ones' && num === 0) num = 100;
-                valueEl.textContent = num;
+                if(valueEl) valueEl.textContent = num;
             }, 50);
+        } else {
+            dieEl.rollInterval = setInterval(() => {
+                const randomFace = sides[Math.floor(Math.random() * sides.length)];
+                if(valueEl) valueEl.textContent = typeof randomFace === 'object' ? (randomFace.label !== undefined ? randomFace.label : randomFace.value) : randomFace;
+            }, 50);
+        }
+    }
 
-            setTimeout(() => {
-                clearInterval(rollInterval);
-                dieEl.classList.remove('rolling');
-                
-                const f1 = sides[Math.floor(Math.random() * sides.length)];
-                const f2 = sides[Math.floor(Math.random() * sides.length)];
-                const v1 = typeof f1 === 'object' ? f1.value : parseFloat(f1);
-                const v2 = typeof f2 === 'object' ? f2.value : parseFloat(f2);
-                
-                let finalNum = dieData.doubleDie === 'tens_and_ones' ? (v1 * 10 + v2) : (v1 + v2);
-                if (dieData.doubleDie === 'tens_and_ones' && finalNum === 0) finalNum = 100;
-                
-                valueEl.textContent = finalNum;
-                
-                if (currentGame && currentGame.evaluator) {
-                    currentGame.evaluator(dieEl, finalNum);
-                }
-            }, 800 + Math.random() * 400);
+    function resolveRoll(dieEl, sides, dieData, randFunc) {
+        clearInterval(dieEl.rollInterval);
+        dieEl.classList.remove('rolling');
+        const valueEl = dieEl.querySelector('.die-value') || dieEl.querySelector('.combined-val');
+
+        if (dieData.doubleDie) {
+            const val1 = dieEl.querySelector('.val-1');
+            const val2 = dieEl.querySelector('.val-2');
+            const f1 = sides[Math.floor(randFunc() * sides.length)];
+            const f2 = sides[Math.floor(randFunc() * sides.length)];
+            
+            if(val1) val1.textContent = typeof f1 === 'object' ? (f1.label !== undefined ? f1.label : f1.value) : f1;
+            if(val2) val2.textContent = typeof f2 === 'object' ? (f2.label !== undefined ? f2.label : f2.value) : f2;
+
+            const v1 = typeof f1 === 'object' ? f1.value : parseFloat(f1);
+            const v2 = typeof f2 === 'object' ? f2.value : parseFloat(f2);
+            
+            let finalNum = dieData.doubleDie === 'tens_and_ones' ? (v1 * 10 + v2) : (v1 + v2);
+            if (dieData.doubleDie === 'tens_and_ones' && finalNum === 0) finalNum = 100;
+            if(valueEl) valueEl.textContent = finalNum;
+
+            if (typeof f1 === 'object' && f1.type) dieEl.classList.add(f1.type);
+            if (typeof f2 === 'object' && f2.type) dieEl.classList.add(f2.type);
+            if (currentGame && currentGame.evaluator) currentGame.evaluator(dieEl, finalNum);
+        } else {
+            const finalFace = sides[Math.floor(randFunc() * sides.length)];
+            const displayVal = typeof finalFace === 'object' ? (finalFace.label !== undefined ? finalFace.label : finalFace.value) : finalFace;
+            if(valueEl) valueEl.textContent = displayVal;
+            
+            if (typeof finalFace === 'object' && finalFace.type) dieEl.classList.add(finalFace.type);
+            if (currentGame && currentGame.evaluator) currentGame.evaluator(dieEl, finalFace);
+        }
+    }
+
+    function executeRoll(diceArray) {
+        if (diceArray.length === 0) return;
+
+        // Start animation immediately
+        diceArray.forEach(dieEl => {
+            const type = dieEl.dataset.type;
+            startRollAnimation(dieEl, config[type].sides, config[type]);
+        });
+
+        const finishRolls = (randFunc) => {
+            diceArray.forEach(dieEl => {
+                setTimeout(() => {
+                    const type = dieEl.dataset.type;
+                    resolveRoll(dieEl, config[type].sides, config[type], randFunc);
+                }, Math.random() * 400); // 0-400ms stagger for settling
+            });
+        };
+
+        if (!shakeCheckbox?.checked) {
+            setTimeout(() => finishRolls(Math.random), 800); // Standard roll delay
             return;
         }
-        
-        // Standard single die logic
-        const rollInterval = setInterval(() => {
-            const randomFace = sides[Math.floor(Math.random() * sides.length)];
-            valueEl.textContent = typeof randomFace === 'object' ? (randomFace.label !== undefined ? randomFace.label : randomFace.value) : randomFace;
-        }, 50);
 
-        setTimeout(() => {
-            clearInterval(rollInterval);
-            dieEl.classList.remove('rolling');
-            
-            const finalFace = sides[Math.floor(Math.random() * sides.length)];
-            const displayVal = typeof finalFace === 'object' ? (finalFace.label !== undefined ? finalFace.label : finalFace.value) : finalFace;
-            valueEl.textContent = displayVal;
-            
-            if (typeof finalFace === 'object' && finalFace.type) {
-                dieEl.classList.add(finalFace.type);
+        // --- Shake to Roll Logic ---
+        let shakeFallback, shakeStopTimeout;
+        let isShaking = false;
+        let entropy = 0;
+
+        const handleMotion = (e) => {
+            const hasAccel = e.acceleration && e.acceleration.x !== null;
+            const acc = hasAccel ? e.acceleration : e.accelerationIncludingGravity;
+            if (!acc) return;
+
+            const x = acc.x || 0, y = acc.y || 0, z = acc.z || 0;
+            const mag = Math.sqrt(x*x + y*y + z*z);
+            const threshold = hasAccel ? 5 : 15; // Gravity accounts for ~9.8 if fallback is used
+
+            if (mag > threshold) {
+                if (!isShaking) {
+                    isShaking = true;
+                    clearTimeout(shakeFallback); // Cancel the 2-second fallback
+                }
+                entropy += Math.abs(x * y * z); // Accumulate randomness data
+                
+                clearTimeout(shakeStopTimeout);
+                shakeStopTimeout = setTimeout(() => {
+                    window.removeEventListener('devicemotion', handleMotion);
+                    const customRandFunc = createPRNG(entropy);
+                    finishRolls(customRandFunc);
+                }, 500); // Wait 500ms after motion stops to lock in the roll
             }
-            
-            if (currentGame && currentGame.evaluator) {
-                currentGame.evaluator(dieEl, finalFace);
-            }
-        }, 800 + Math.random() * 400);
+        };
+
+        const initShake = () => {
+            window.addEventListener('devicemotion', handleMotion);
+            shakeFallback = setTimeout(() => {
+                window.removeEventListener('devicemotion', handleMotion);
+                finishRolls(Math.random); // Fallback to standard math random
+            }, 1500); // 1.5 seconds when shake is enabled
+        };
+
+        // iOS 13+ requires explicit permission for DeviceMotion
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission()
+                .then(response => {
+                    if (response == 'granted') initShake();
+                    else setTimeout(() => finishRolls(Math.random), 800); // Permission denied fallback
+                })
+                .catch(err => {
+                    console.error(err);
+                    setTimeout(() => finishRolls(Math.random), 800);
+                });
+        } else {
+            initShake();
+        }
     }
 
     // Difficulty UI logic
@@ -241,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         dieEl.addEventListener('click', () => {
-            rollSingleDie(dieEl, sides);
+            executeRoll([dieEl]);
         });
 
         // Removed the automatic rollSingleDie(dieEl, sides) call from here
@@ -547,16 +630,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     rollBtn?.addEventListener('click', () => {
-        // Re-roll all dice currently on the board
         const allDice = document.querySelectorAll('#dice-board .die');
+        const diceArr = [];
         allDice.forEach(dieEl => {
-            dieEl.dataset.isBaseRoll = 'true'; // Mark as a base roll die
-            const type = dieEl.dataset.type;
-            const sides = config[type].sides;
-            rollSingleDie(dieEl, sides);
+            dieEl.dataset.isBaseRoll = 'true'; 
+            diceArr.push(dieEl);
         });
         
-        // Close chooser box on mobile if it is open
+        executeRoll(diceArr);
+        
         sidebar.classList.remove('expanded');
     });
 
@@ -605,5 +687,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentModalDieType) {
             setDieCountTo(currentModalDieType, newCount);
         }
+    });
+
+    // Shake Info Modal Logic
+    const shakeInfoBtn = document.getElementById('shake-info-btn');
+    const shakeInfoModal = document.getElementById('shake-info-modal');
+    const shakeInfoCloseX = document.getElementById('shake-info-close-x');
+
+    shakeInfoBtn?.addEventListener('click', () => {
+        shakeInfoModal.classList.add('active');
+    });
+    
+    shakeInfoCloseX?.addEventListener('click', () => {
+        shakeInfoModal.classList.remove('active');
     });
 });

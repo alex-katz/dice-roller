@@ -19,6 +19,12 @@
                     <span id="current-game-name">Standard</span>
                 </button>
             </div>
+            
+            <div class="shake-control">
+                <label><input type="checkbox" id="shake-checkbox"> Shake to Roll</label>
+                <button id="shake-info-btn" class="info-btn">?</button>
+            </div>
+
             <div id="controls-container"></div>
             
         </aside>
@@ -97,6 +103,21 @@
             </div>
             <input type="text" id="game-search" placeholder="Search games...">
             <div id="game-list"></div>
+        </div>
+    </div>
+
+    <!-- Shake Info Modal -->
+    <div id="shake-info-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Shake to Roll</h3>
+                <button id="shake-info-close-x" class="modal-close-x">&times;</button>
+            </div>
+            <p style="text-align: left; font-size: 14px; color: #555; line-height: 1.5;">
+                When enabled, rolling will pause for up to 2 seconds waiting for you to shake your device. 
+                Your physical movements (accelerometer data) are mathematically converted into a random seed to generate your dice results, ensuring true physical randomness!<br><br>
+                If no shake is detected, it falls back to standard random generation.
+            </p>
         </div>
     </div>
 
