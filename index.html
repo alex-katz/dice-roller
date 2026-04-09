@@ -21,7 +21,13 @@
             </div>
             
             <div class="shake-control">
-                <label><input type="checkbox" id="shake-checkbox"> Shake to Roll</label>
+                <label class="shake-toggle-label">
+                    <span>Shake for Random</span>
+                    <div class="switch">
+                        <input type="checkbox" id="shake-checkbox">
+                        <span class="slider"></span>
+                    </div>
+                </label>
                 <button id="shake-info-btn" class="info-btn">?</button>
             </div>
 
@@ -110,13 +116,13 @@
     <div id="shake-info-modal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Shake to Roll</h3>
+                <h3>Shake for Random</h3>
                 <button id="shake-info-close-x" class="modal-close-x">&times;</button>
             </div>
-            <p style="text-align: left; font-size: 14px; color: #555; line-height: 1.5;">
-                When enabled, rolling will pause for up to 2 seconds waiting for you to shake your device. 
-                Your physical movements (accelerometer data) are mathematically converted into a random seed to generate your dice results, ensuring true physical randomness!<br><br>
-                If no shake is detected, it falls back to standard random generation.
+            <p style="text-align: left; font-size: 15px; color: #444; line-height: 1.5;">
+                Turn your device into a real dice cup! 🎲<br><br>
+                When enabled, tapping 'Roll' gives you a brief moment to shake your phone. We use your actual physical movements to roll the dice, giving you true, real-world randomness.<br><br>
+                If you choose not to shake, the app will just roll normally for you after a short delay.
             </p>
         </div>
     </div>
