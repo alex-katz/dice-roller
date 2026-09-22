@@ -547,6 +547,42 @@ body.show-dice-names .die-name {
          0px  2px 0 #fff; /* Optional bottom drop for extra pop */
 }
 
+/* Icon faces (e.g. Blood Bowl block dice) */
+.die-value.has-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.face-icon {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+    /* White halo so dark glyphs read on any die art */
+    filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);
+}
+
+.face-label {
+    display: none; /* Word only revealed in 'i' mode */
+    font-size: 10px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 2px;
+    text-align: center;
+    white-space: nowrap;
+    text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
+}
+
+body.show-dice-names .face-label {
+    display: block;
+}
+
 /* Optional subtle shake animation to simulate rolling in place */
 @keyframes shake {
     0% { transform: rotate(-3deg); }

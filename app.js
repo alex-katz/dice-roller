@@ -56,6 +56,20 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Render a single face into a value element. Icon faces show the glyph;
+    // their result word is emitted as a label that only appears in 'i' mode.
+    function renderFaceInto(el, face) {
+        if (!el) return;
+        if (face && typeof face === 'object' && face.icon) {
+            const label = face.label !== undefined ? face.label : '';
+            el.classList.add('has-icon');
+            el.innerHTML = `<img class="face-icon" src="${face.icon}" alt="${label}"><span class="face-label">${label}</span>`;
+        } else {
+            el.classList.remove('has-icon');
+            el.textContent = typeof face === 'object' ? (face.label !== undefined ? face.label : face.value) : face;
+        }
+    }
+
     function startRollAnimation(dieEl, sides, dieData) {
         if (dieEl.classList.contains('rolling')) return;
         dieEl.classList.add('rolling');
@@ -80,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             dieEl.rollInterval = setInterval(() => {
                 const randomFace = sides[Math.floor(Math.random() * sides.length)];
-                if(valueEl) valueEl.textContent = typeof randomFace === 'object' ? (randomFace.label !== undefined ? randomFace.label : randomFace.value) : randomFace;
+                renderFaceInto(valueEl, randomFace);
             }, 50);
         }
     }
@@ -111,9 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentGame && currentGame.evaluator) currentGame.evaluator(dieEl, finalNum);
         } else {
             const finalFace = sides[Math.floor(randFunc() * sides.length)];
-            const displayVal = typeof finalFace === 'object' ? (finalFace.label !== undefined ? finalFace.label : finalFace.value) : finalFace;
-            if(valueEl) valueEl.textContent = displayVal;
-            
+            renderFaceInto(valueEl, finalFace);
+
             if (typeof finalFace === 'object' && finalFace.type) dieEl.classList.add(finalFace.type);
             if (currentGame && currentGame.evaluator) currentGame.evaluator(dieEl, finalFace);
         }

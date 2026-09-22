@@ -210,8 +210,56 @@ window.GAMES_CONFIG = {
             
             if (totalValEl && totalContainer) {
                 // Always keep the total visible to prevent layout jumping
-                totalContainer.style.display = 'block'; 
+                totalContainer.style.display = 'block';
                 totalValEl.textContent = isRolling ? '...' : total;
+            }
+        }
+    },
+    'bloodbowl': {
+        name: 'Blood Bowl',
+        dice: {
+            // Special block die: faces are icons, the result word only shows in 'i' mode.
+            // Standard block-die spread: Attacker Down, Both Down, Push Back x2, Defender Stumbles, Defender Down.
+            'Block': {
+                sides: [
+                    { value: 'attacker_down',     label: 'Attacker Down',     icon: 'images/bb_attacker_down.png' },
+                    { value: 'both_down',         label: 'Both Down',         icon: 'images/bb_both_down.png' },
+                    { value: 'push_back',         label: 'Push Back',         icon: 'images/bb_push_back.png' },
+                    { value: 'push_back',         label: 'Push Back',         icon: 'images/bb_push_back.png' },
+                    { value: 'defender_stumbles', label: 'Defender Stumbles', icon: 'images/bb_defender_stumbles.png' },
+                    { value: 'defender_down',     label: 'Defender Down',     icon: 'images/bb_defender_down.png' }
+                ],
+                image: 'images/d6.png'
+            },
+            'd6': { sides: [1, 2, 3, 4, 5, 6], image: 'images/d6.png' },
+            'd8': { sides: [1, 2, 3, 4, 5, 6, 7, 8], image: 'images/d8.png' },
+            // d16 has no dedicated art yet; the d10 icon is a stand-in for now.
+            'd16': { sides: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], image: 'images/d10.png' }
+        },
+        difficultyUI: 'target_and_mode',
+        layout: 'standard',
+        startDice: { 'Block': 2 },
+        evaluator: function(dieEl, finalFace) {
+            dieEl.classList.remove('failed');
+
+            // Block dice are symbolic (no numeric value) - never fail them on a target.
+            if (dieEl.dataset.type === 'Block') return;
+
+            const diffControl = document.getElementById('difficulty-control');
+            // Object faces coerce to NaN, so symbolic results bail out here too.
+            if (diffControl.classList.contains('hidden') || isNaN(finalFace)) return;
+
+            const opRadio = document.querySelector('input[name="diff-op"]:checked');
+            const target = parseFloat(document.getElementById('diff-target').value);
+            if (!opRadio || isNaN(target)) return;
+
+            const op = opRadio.value;
+            const numericFace = parseFloat(finalFace);
+
+            if (op === '>=') {
+                if (numericFace < target) dieEl.classList.add('failed');
+            } else if (op === '<=') {
+                if (numericFace > target) dieEl.classList.add('failed');
             }
         }
     }

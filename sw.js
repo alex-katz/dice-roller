@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dice-roller-v1';
+const CACHE_NAME = 'dice-roller-v2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -13,7 +13,12 @@ const ASSETS_TO_CACHE = [
     './images/d12.png',
     './images/d20.png',
     './images/gear.png',
-    './images/dice_config.png'
+    './images/dice_config.png',
+    './images/bb_attacker_down.png',
+    './images/bb_both_down.png',
+    './images/bb_push_back.png',
+    './images/bb_defender_stumbles.png',
+    './images/bb_defender_down.png'
 ];
 
 self.addEventListener('install', event => {
